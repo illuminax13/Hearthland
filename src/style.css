@@ -203,8 +203,9 @@ h1 { font-size: 64px; letter-spacing: 0.12em; line-height: 0.9; }
   bottom: 0;
   z-index: 2;
   margin-top: 16px;
-  padding: 12px 0 6px;
-  background: linear-gradient(180deg, rgba(244, 236, 217, 0), var(--paper) 14px);
+  padding: 10px 0 6px;
+  background: var(--paper);
+  box-shadow: 0 -10px 12px var(--paper);
 }
 .primary { background: var(--moss); color: #f6efe2; }
 .danger { background: var(--red); color: #f6efe2; }
