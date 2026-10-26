@@ -200,31 +200,31 @@ export function createPreview(): GameState {
 
 export function tutorialLine(s: GameState): string | null {
   const t = s.tutorial;
-  if (!t.till) return "Till the garden: face the ground south of the door and press E.";
-  if (!t.plant) return "Press 1–4 for a seed, then E on tilled soil.";
-  if (!t.water) return "Water the new planting with E.";
-  if (!t.sleep) return "Face the farmhouse from the porch and press E to sleep.";
-  if (!t.harvest) return "Ripe crops show their color. E gathers a row.";
+  if (!t.till) return "Till the garden: face the ground south of the door and press Use.";
+  if (!t.plant) return "Pick a seed, then Use on tilled soil.";
+  if (!t.water) return "Water the new planting with Use.";
+  if (!t.sleep) return "Face the farmhouse from the porch and press Use to sleep.";
+  if (!t.harvest) return "Ripe crops show their color. Use gathers a row.";
   if (!t.sell) return "Follow the lane south into town and sell at Voss's.";
-  if (!t.talk) return "Face someone and press E. The town keeps a ledger too.";
-  if (!t.tree) return "Press 5 for the apple sapling and plant it. It is for someone not born yet.";
+  if (!t.talk) return "Face someone and press Use. The town keeps a ledger too.";
+  if (!t.tree) return "Choose the apple sapling and plant it. It is for someone not born yet.";
   return null;
 }
 
 export function hint(s: GameState): string {
   const actor = actorFromFacing(s);
-  if (actor) return `E  Talk to ${actor.name}`;
+  if (actor) return `Use · Talk to ${actor.name}`;
   const f = facingOf(s);
   if (!inBounds(f.x, f.y)) return "The lane ends here.";
   const t = tileAt(s, f.x, f.y);
-  if (t.interact === "home") return "E  Home — sleep, family, ledger";
-  if (t.interact === "market") return "E  Voss's market";
-  if (t.interact === "church") return "E  Sit a minute in the church";
-  if (t.interact === "school") return "E  The schoolhouse";
-  if (t.interact === "board") return "E  Odd job on the town board";
-  if (s.player && tileAt(s, s.player.x, s.player.y).interact === "home" && t.solid) return "E  Step inside";
+  if (t.interact === "home") return "Use · Home — sleep, family, ledger";
+  if (t.interact === "market") return "Use · Voss's market";
+  if (t.interact === "church") return "Use · Sit a minute in the church";
+  if (t.interact === "school") return "Use · The schoolhouse";
+  if (t.interact === "board") return "Use · Odd job on the town board";
+  if (s.player && tileAt(s, s.player.x, s.player.y).interact === "home" && t.solid) return "Use · Step inside";
   if (t.tree) {
-    if (t.tree.fruit) return "E  Pick apples";
+    if (t.tree.fruit) return "Use · Pick apples";
     const age = t.tree.age;
     return age >= 4 || (s.activeHeirlooms.includes("orchard-letter") && age >= 3)
       ? "Apple tree, resting until autumn"
@@ -232,7 +232,7 @@ export function hint(s: GameState): string {
   }
   if (t.crop) {
     const def = CROPS[t.crop.id];
-    if (t.crop.prog >= def.growDays) return `E  Harvest ${def.name.toLowerCase()}`;
+    if (t.crop.prog >= def.growDays) return `Use · Harvest ${def.name.toLowerCase()}`;
     const water = t.crop.watered ? "watered" : "thirsty";
     return `${def.name}, day ${t.crop.prog}/${def.growDays}, ${water} · ${soilText(s, t)}`;
   }
@@ -240,10 +240,10 @@ export function hint(s: GameState): string {
     if (s.season === "winter") return `Resting ground · ${soilText(s, t)}`;
     if (t.tilled) {
       const what = s.selected === "apple" ? "apple sapling" : CROPS[s.selected].name.toLowerCase();
-      return `E  Plant ${what} · ${soilText(s, t)}`;
+      return `Use · Plant ${what} · ${soilText(s, t)}`;
     }
     const tool = s.machines.tractor ? "tractor" : s.machines.plow ? "plow" : "hoe";
-    return `E  Till with the ${tool} · ${soilText(s, t)}`;
+    return `Use · Till with the ${tool} · ${soilText(s, t)}`;
   }
   if (t.g === "water") return "Creek water, cold even in August.";
   if (t.decor === "tree") return "A wild tree. Not yours to cut.";

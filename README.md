@@ -47,7 +47,25 @@ That typechecks, runs a scripted playthrough (new game through a succession, the
 | V | Debug: force an event card |
 | 0 | Debug: jump to the end-of-century summary |
 
-The line at the bottom of the screen says what E will do. Sleep from the farmhouse porch (face the house and press E). The game saves in `localStorage` when you sleep, decide, sell, or pass the farm. Continue is on the title screen.
+The line at the bottom of the screen says what Use will do. On a keyboard, Use is E or Space. Sleep from the farmhouse porch (face the house and press Use). The game saves in `localStorage` when you sleep, decide, sell, or pass the farm. Continue is on the title screen. The menu can save again, and it holds the same shortcuts as F, G, V, and 0.
+
+## Phone and tablet
+
+Touch controls appear on a coarse pointer (a phone or tablet) and stay hidden when you are using a mouse. The keyboard keeps working.
+
+| Control | Action |
+| --- | --- |
+| Pad, lower left | Walk. Hold a direction to keep moving. |
+| Use | Same as E: till, plant, water, harvest, talk, open a door |
+| Compost | Same as C |
+| Seed buttons | Wheat, potatoes, beans, corn, apple sapling |
+| Family, Ledger, Help, Menu | The same panels as K, L, H, and Esc |
+| Menu → Save | Write the save in this browser |
+| Menu → Shortcuts | Skip a year, force an event, open succession, or end the century |
+
+Panels scroll. Buttons are at least 44px. The page does not pinch-zoom or scroll while you play, and the layout follows the notch, the home indicator, and the collapsing address bar. Turn the phone: portrait stacks the pad under the field; landscape puts the pad on the left and the tools on the right.
+
+Add it to the home screen from Safari or Chrome. The manifest opens it fullscreen. That needs the GitHub Pages site (or any HTTPS host); a local `http://` address can still be played in the mobile browser.
 
 ## What's in this version
 
