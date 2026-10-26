@@ -32,6 +32,8 @@ export interface Scene {
   particles: Particle[];
   time: number;
   showNames: boolean;
+  ui: number;
+  mapTop: number;
 }
 
 const INK = "#2a2118";
@@ -105,7 +107,7 @@ export function drawWorld(ctx: CanvasRenderingContext2D, s: GameState, view: Sce
           step: Math.sin(view.time / 400 + a.x) > 0 ? 1 : 0,
           small: a.small,
         });
-        if (view.showNames && near(view, a.x, a.y)) label(ctx, p.x + 8 * zoom, p.y - 2 * zoom, a.name);
+        if (view.showNames && near(view, a.x, a.y)) label(ctx, p.x + 8 * zoom, p.y - 2 * zoom, a.name, view.ui);
       },
     });
   }
@@ -528,14 +530,14 @@ function drawWeather(ctx: CanvasRenderingContext2D, view: Scene, s: GameState): 
   const h = ctx.canvas.height;
   if (s.weather === "rain" || s.weather === "storm") {
     ctx.strokeStyle = s.weather === "storm" ? "rgba(210,230,240,0.55)" : "rgba(200,220,230,0.4)";
-    ctx.lineWidth = 1;
+    ctx.lineWidth = Math.max(1, view.ui);
     const n = s.weather === "storm" ? 80 : 46;
     for (let i = 0; i < n; i++) {
       const x = ((i * 97 + view.time / 8) % (w + 40)) - 20;
       const y = ((i * 53 + view.time / 3) % (h + 40)) - 20;
       ctx.beginPath();
       ctx.moveTo(x, y);
-      ctx.lineTo(x - 3, y + 10);
+      ctx.lineTo(x - 3 * view.ui, y + 10 * view.ui);
       ctx.stroke();
     }
   }
@@ -606,9 +608,11 @@ function drawParticle(ctx: CanvasRenderingContext2D, view: Scene, p: Particle): 
 }
 
 function drawMinimap(ctx: CanvasRenderingContext2D, s: GameState, view: Scene): void {
-  const scale = 3;
-  const ox = ctx.canvas.width - COLS * scale - 18;
-  const oy = 108;
+  const scale = Math.max(2, Math.round(3 * view.ui));
+  const pad = 8 * view.ui;
+  const ox = ctx.canvas.width - COLS * scale - pad;
+  const oy = view.mapTop;
+  if (ox < pad || oy + ROWS * scale > ctx.canvas.height - pad) return;
   ctx.fillStyle = "rgba(28, 22, 16, 0.72)";
   ctx.fillRect(ox - 4, oy - 4, COLS * scale + 8, ROWS * scale + 8);
   for (let y = 0; y < ROWS; y++) {
@@ -630,12 +634,13 @@ function drawMinimap(ctx: CanvasRenderingContext2D, s: GameState, view: Scene): 
   ctx.fillRect(ox + Math.round(view.playerX) * scale, oy + Math.round(view.playerY) * scale, scale + 1, scale + 1);
 }
 
-function label(ctx: CanvasRenderingContext2D, x: number, y: number, text: string): void {
-  ctx.font = "12px Georgia, serif";
+function label(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, ui: number): void {
+  const pad = 4 * ui;
+  ctx.font = `${12 * ui}px Georgia, serif`;
   ctx.textAlign = "center";
   const w = ctx.measureText(text).width;
   ctx.fillStyle = "rgba(28,22,16,0.75)";
-  ctx.fillRect(x - w / 2 - 4, y - 12, w + 8, 16);
+  ctx.fillRect(x - w / 2 - pad, y - 12 * ui, w + pad * 2, 16 * ui);
   ctx.fillStyle = "#f6efe2";
   ctx.fillText(text, x, y);
   ctx.textAlign = "left";

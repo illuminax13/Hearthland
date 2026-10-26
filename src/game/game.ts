@@ -65,14 +65,52 @@ export class Game {
   private particles: Particle[] = [];
   private last = 0;
   private audio = new Soundboard();
+  private touchDir: Dir | null = null;
+  private cssW = 320;
+  private cssH = 240;
+  private dpr = 1;
+  private touchMode = false;
 
   constructor(
     private canvas: HTMLCanvasElement,
     private hud: HTMLElement,
     private overlay: HTMLElement,
+    private touch: HTMLElement,
   ) {
+    this.touchMode = window.matchMedia("(pointer: coarse)").matches;
+    this.bindTouch();
+    this.syncChrome();
     this.resize();
-    window.addEventListener("resize", () => this.resize());
+    const onResize = () => this.resize();
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    window.visualViewport?.addEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("scroll", onResize);
+    window.matchMedia("(pointer: coarse)").addEventListener("change", (e) => {
+      this.touchMode = e.matches || this.touchMode;
+      this.syncChrome();
+      this.resize();
+    });
+    window.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "touch" && !this.touchMode) {
+        this.touchMode = true;
+        this.syncChrome();
+        this.resize();
+      }
+    });
+    document.addEventListener(
+      "touchmove",
+      (e) => {
+        const t = e.target as HTMLElement | null;
+        if (t?.closest(".sheet, .panel, .log, input, textarea")) return;
+        e.preventDefault();
+      },
+      { passive: false },
+    );
+    document.addEventListener("gesturestart", (e) => e.preventDefault());
+    document.addEventListener("contextmenu", (e) => {
+      if (this.touchMode) e.preventDefault();
+    });
     window.addEventListener("keydown", (e) => this.onKey(e));
     window.addEventListener("keyup", (e) => this.keys.delete(e.key.toLowerCase()));
     this.overlay.addEventListener("click", (e) => this.onClick(e));
@@ -151,6 +189,7 @@ export class Game {
   }
 
   private heldDir(): Dir | null {
+    if (this.touchDir) return this.touchDir;
     if (this.keys.has("w") || this.keys.has("arrowup")) return "n";
     if (this.keys.has("s") || this.keys.has("arrowdown")) return "s";
     if (this.keys.has("a") || this.keys.has("arrowleft")) return "w";
@@ -186,8 +225,8 @@ export class Game {
     }
     const scene: Scene = {
       zoom,
-      camX: this.camX,
-      camY: this.camY,
+      camX: Math.round(this.camX * zoom) / zoom,
+      camY: Math.round(this.camY * zoom) / zoom,
       playerX: player.x,
       playerY: player.y,
       facing: player.facing,
@@ -201,6 +240,8 @@ export class Game {
       particles: this.particles,
       time,
       showNames: this.screen === "play" || this.screen === "title",
+      ui: this.dpr,
+      mapTop: (this.touchMode && this.screen === "play" ? 10 : 108) * this.dpr,
     };
     drawWorld(ctx, s, scene);
   }
@@ -218,13 +259,86 @@ export class Game {
   }
 
   private zoom(): number {
-    return Math.max(2, Math.min(4, Math.floor(Math.min(this.canvas.width, this.canvas.height) / 220)));
+    const cssMin = Math.min(this.cssW, this.cssH);
+    const cssZoom = Math.max(2, Math.min(4, Math.floor(cssMin / 200)));
+    return Math.max(2, Math.round(cssZoom * this.dpr));
   }
 
   private resize(): void {
+    const vv = window.visualViewport;
+    const height = Math.round(vv?.height ?? window.innerHeight);
+    const top = Math.round(vv?.offsetTop ?? 0);
+    document.documentElement.style.setProperty("--app-h", `${height}px`);
+    document.documentElement.style.setProperty("--app-top", `${top}px`);
     const rect = this.canvas.getBoundingClientRect();
-    this.canvas.width = Math.max(320, Math.floor(rect.width));
-    this.canvas.height = Math.max(240, Math.floor(rect.height));
+    const cssW = Math.max(1, rect.width);
+    const cssH = Math.max(1, rect.height);
+    const dpr = Math.max(1, Math.min(3, Math.round(window.devicePixelRatio || 1)));
+    const nextW = Math.max(1, Math.round(cssW * dpr));
+    const nextH = Math.max(1, Math.round(cssH * dpr));
+    this.cssW = cssW;
+    this.cssH = cssH;
+    this.dpr = dpr;
+    if (this.canvas.width !== nextW || this.canvas.height !== nextH) {
+      this.canvas.width = nextW;
+      this.canvas.height = nextH;
+    }
+  }
+
+  private syncChrome(): void {
+    document.documentElement.classList.toggle("touch", this.touchMode);
+    document.documentElement.classList.toggle("playing", this.screen === "play" && !!this.state);
+  }
+
+  private bindTouch(): void {
+    const pad = this.touch.querySelector<HTMLElement>(".pad");
+    if (pad) {
+      const point = (e: PointerEvent) => {
+        const buttons = [...pad.querySelectorAll<HTMLElement>("[data-dir]")];
+        let best: { dir: Dir; d: number } | null = null;
+        for (const b of buttons) {
+          const dir = b.dataset.dir;
+          if (dir !== "n" && dir !== "s" && dir !== "e" && dir !== "w") continue;
+          const r = b.getBoundingClientRect();
+          const d = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2));
+          if (!best || d < best.d) best = { dir, d };
+        }
+        this.setTouchDir(best && best.d <= 78 ? best.dir : null);
+      };
+      pad.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        pad.setPointerCapture(e.pointerId);
+        this.audio.unlock();
+        point(e);
+      });
+      pad.addEventListener("pointermove", (e) => {
+        if (!pad.hasPointerCapture(e.pointerId)) return;
+        point(e);
+      });
+      const clear = (e: PointerEvent) => {
+        if (pad.hasPointerCapture(e.pointerId)) pad.releasePointerCapture(e.pointerId);
+        this.setTouchDir(null);
+      };
+      pad.addEventListener("pointerup", clear);
+      pad.addEventListener("pointercancel", clear);
+    }
+    this.touch.querySelector("#touch-use")?.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      this.audio.unlock();
+      this.doInteract();
+    });
+    this.touch.querySelector("#touch-compost")?.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      this.audio.unlock();
+      if (this.state && this.screen === "play") this.after(useCompost(this.state));
+    });
+  }
+
+  private setTouchDir(dir: Dir | null): void {
+    this.touchDir = dir;
+    this.touch.querySelectorAll<HTMLElement>("[data-dir]").forEach((el) => {
+      el.classList.toggle("held", el.dataset.dir === dir);
+    });
   }
 
   private current(): GameState {
@@ -395,6 +509,32 @@ export class Game {
     if (act === "save") {
       saveGame(s);
       this.say("Saved in this browser.");
+      this.refresh();
+      return;
+    }
+    if (act === "debug-year") {
+      this.after(debugAdvanceYear(s));
+      return;
+    }
+    if (act === "debug-event") {
+      debugForceEvent(s);
+      this.screen = "event";
+      this.refresh();
+      return;
+    }
+    if (act === "debug-heir") {
+      debugPrepareSuccession(s);
+      s.resumeScreen = "succession";
+      this.screen = "succession";
+      this.armSuccession();
+      this.say("The years gather for a handing-over.");
+      this.refresh();
+      return;
+    }
+    if (act === "debug-end") {
+      debugToEpilogue(s);
+      this.screen = "epilogue";
+      saveGame(s);
       this.refresh();
       return;
     }
@@ -608,6 +748,8 @@ export class Game {
   }
 
   private refresh(): void {
+    if (this.screen !== "play") this.setTouchDir(null);
+    this.syncChrome();
     const bag = this.bag();
     const sig = JSON.stringify({
       screen: bag.screen,
@@ -625,6 +767,7 @@ export class Game {
     this.hud.innerHTML = hudHtml(bag);
     this.overlay.innerHTML = overlayHtml(bag);
     paintPortraits(this.overlay, bag);
+    this.resize();
   }
 }
 

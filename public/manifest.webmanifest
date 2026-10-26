@@ -1,0 +1,31 @@
+{
+  "name": "Hearthland",
+  "short_name": "Hearthland",
+  "description": "A generational farming life sim. One family, one farm, a century of choices.",
+  "start_url": "/Hearthland/",
+  "scope": "/Hearthland/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#17130f",
+  "theme_color": "#17130f",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

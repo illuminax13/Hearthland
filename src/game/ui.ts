@@ -53,7 +53,7 @@ export interface UiBag {
 
 export function hudHtml(bag: UiBag): string {
   const s = bag.state;
-  if (!s || bag.screen === "title" || bag.screen === "new" || bag.screen === "epilogue") return "";
+  if (!s || bag.screen !== "play") return "";
   const energy = Math.max(0, Math.min(100, (s.energy / s.maxEnergy) * 100));
   const quest = tutorialLine(s);
   const seeds = CROP_ORDER.map((id) => {
@@ -175,16 +175,17 @@ function help(bag: UiBag): string {
   return sheet(`
     <p class="kicker">Field notes</p>
     <h2>How a day works</h2>
-    <p>Walk the farm. Face a tile and press E. The hint at the bottom tells you what E will do. Energy and daylight both run out; sleep in the farmhouse to put the day away.</p>
+    <p>Walk the farm. Face a tile and press Use — the E key, or the round button on a phone. The hint at the bottom tells you what Use will do. Energy and daylight both run out; sleep in the farmhouse to put the day away.</p>
     <div class="help-keys">
       <b>WASD / arrows</b><span>Walk</span>
-      <b>E / Space</b><span>Use what you're facing</span>
+      <b>Pad</b><span>Walk, on a touch screen</span>
+      <b>E / Space / Use</b><span>Use what you're facing</span>
       <b>1–4</b><span>Wheat, potatoes, beans, corn</span>
       <b>5</b><span>Apple sapling</span>
-      <b>C</b><span>Spread compost on the faced tile</span>
+      <b>C / Compost</b><span>Spread compost on the faced tile</span>
       <b>H</b><span>This page</span>
       <b>L / K</b><span>Ledger / family</span>
-      <b>Esc</b><span>Menu, or close a panel</span>
+      <b>Esc / Menu</b><span>Menu, or close a panel</span>
       <b>M</b><span>Mute the valley</span>
       <b>F</b><span>Debug: skip one year</span>
       <b>G</b><span>Debug: gather an heir and open succession</span>
@@ -193,7 +194,7 @@ function help(bag: UiBag): string {
     </div>
     <hr class="rule" />
     <p>Soil tires if you take from it and don't rest it or plant beans. Apple trees need years. Debts, neighbors, and the box under the bed all survive a funeral or a retirement. In 1950 the prices, the machines, and the town's arguments change — not just the paint.</p>
-    <div class="row"><button class="primary" data-act="${back}">${bag.state ? "Back to the farm" : "Back"}</button></div>
+    <div class="row sticky-actions"><button class="primary" data-act="${back}">${bag.state ? "Back to the farm" : "Back"}</button></div>
   `);
 }
 
@@ -203,7 +204,7 @@ function summary(bag: UiBag): string {
     <p class="kicker">Morning</p>
     <h2>${esc(bag.summary?.title ?? "A new day")}</h2>
     <ul class="clean">${lines.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>
-    <div class="row"><button class="primary" data-act="close">Begin the day</button></div>
+    <div class="row sticky-actions"><button class="primary" data-act="close">Begin the day</button></div>
   `);
 }
 
@@ -260,7 +261,7 @@ function shop(bag: UiBag): string {
           `<button class="choice" data-act="shop:${esc(r.id)}" ${r.disabled ? "disabled" : ""}>${esc(r.label)}<small>${esc(r.hint)}</small></button>`,
       )
       .join("")}
-    <div class="row"><button data-act="close">Leave the store</button></div>
+    <div class="row sticky-actions"><button data-act="close">Leave the store</button></div>
   `);
 }
 
@@ -272,7 +273,7 @@ function home(bag: UiBag): string {
     <p class="kicker">The farmhouse</p>
     <h2>${esc(s.playerName)}'s kitchen</h2>
     <p>${early ? "The day is barely started. Sleeping now spends it." : "The stove is a good argument for ending the day."} ${esc(s.dog.name)} is already on the rug.</p>
-    <div class="row">
+    <div class="row sticky-actions">
       <button class="primary" data-act="sleep">Sleep until morning</button>
       <button data-act="family">Family</button>
       <button data-act="ledger">Ledger</button>
@@ -309,7 +310,7 @@ function ledger(bag: UiBag): string {
     <ul class="clean">${s.memories.slice(0, 6).map((m) => `<li>${esc(m)}</li>`).join("") || "<li>Nothing written yet.</li>"}</ul>
     <h3>Recent</h3>
     <ul class="log">${s.log.slice(0, 8).map((m) => `<li>${esc(m)}</li>`).join("")}</ul>
-    <div class="row"><button class="primary" data-act="close">Close</button></div>
+    <div class="row sticky-actions"><button class="primary" data-act="close">Close</button></div>
   `, true);
 }
 
@@ -328,7 +329,7 @@ function family(bag: UiBag): string {
     ${kids || "<p>No children yet. A marriage and a few springs will see to that.</p>"}
     <h3>In the box</h3>
     <ul class="clean">${s.keptHeirlooms.map((id) => `<li><b>${esc(HEIRLOOMS[id]?.name ?? id)}</b> — ${esc(HEIRLOOMS[id]?.blurb ?? "")}${s.activeHeirlooms.includes(id) ? " (with you)" : ""}</li>`).join("")}</ul>
-    <div class="row">
+    <div class="row sticky-actions">
       ${canFamily ? `<button class="primary" data-act="family-time">Spend the season with them</button>` : ""}
       <button data-act="close">Close</button>
     </div>
@@ -364,6 +365,14 @@ function pause(bag: UiBag): string {
       <button data-act="help">How to play</button>
       <button data-act="sound">Mute / sound</button>
       <button class="danger" data-act="title">Title screen</button>
+    </div>
+    <h3>Shortcuts</h3>
+    <p class="muted">Same as the F, G, V, and 0 keys. Useful on a phone, where there is no keyboard.</p>
+    <div class="row">
+      <button data-act="debug-year">Skip a year</button>
+      <button data-act="debug-event">An event</button>
+      <button data-act="debug-heir">Succession</button>
+      <button data-act="debug-end">End of the century</button>
     </div>
     <p class="muted">${bag.hasSave ? "A save is already in this browser. Saving again replaces it." : "Nothing saved yet."}</p>
   `);
@@ -406,7 +415,7 @@ function succession(bag: UiBag): string {
     <button class="choice${cousinOn}" data-act="heir:cousin">A cousin, Rowan, if no child should have it<small>Steady and a little frugal. The suitcase is cardboard.</small></button>
     <h3>Heirloom box · ${bag.keeps.length}/3</h3>
     <div class="grid-2">${keeps}</div>
-    <div class="row">
+    <div class="row sticky-actions">
       <button class="primary" data-act="confirm-heir" ${bag.heirId ? "" : "disabled"}>Hand over the keys</button>
       ${hard ? "" : `<button data-act="defer">Not this spring</button>`}
     </div>
@@ -421,7 +430,7 @@ function stories(bag: UiBag): string {
     <p class="kicker">${esc(s.playerName)} ${esc(s.familyName)}</p>
     <h2>What the house still says</h2>
     ${lines.map((l) => `<p class="lede">${esc(l)}</p>`).join("")}
-    <div class="row"><button class="primary" data-act="close">Open the door</button></div>
+    <div class="row sticky-actions"><button class="primary" data-act="close">Open the door</button></div>
   `);
 }
 
@@ -445,7 +454,7 @@ function epilogue(bag: UiBag): string {
     <hr class="rule" />
     <p>Left on the place: $${s.money} in the jar, $${s.debt} on the note, soil ${averageSoil(s)}, ${trees.total} apple trees (${trees.mature} of age). ${s.soldParcels.includes("east") ? "The east acre is gone." : "The east acre remains."}</p>
     ${paras.map((p) => `<p class="ep">${esc(p)}</p>`).join("")}
-    <div class="row">
+    <div class="row sticky-actions">
       <button class="primary" data-act="title">Title screen</button>
     </div>
   `, true);
