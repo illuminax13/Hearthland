@@ -1,0 +1,17 @@
+{
+  "name": "hearthland",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && tsx scripts/check.ts && vite build",
+    "preview": "vite preview",
+    "check": "tsc --noEmit && tsx scripts/check.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2",
+    "vite": "^6.3.5"
+  }
+}
